@@ -3,9 +3,12 @@ const solc = require("solc");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
-import { _callFunction, _pureFunction } from './helpers.js';
 
 const ContractPathName = "Note.sol";
+
+const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+const account = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+console.log(`Wallet address: ${account.address}`);
 
 async function saveBytecodeAndAbi(contractPathName) {
   const contractPath = path.resolve(__dirname, "contracts", contractPathName);
@@ -65,9 +68,6 @@ async function saveBytecodeAndAbi(contractPathName) {
 
 async function deploy(contractPathName) {
   const contratcFunc = await saveBytecodeAndAbi(contractPathName);
-  const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-  const account = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  console.log(`Wallet address: ${account.address}`);
 
   const abi = contratcFunc.ABI;
   const binary = contratcFunc.bytecode;
@@ -76,23 +76,11 @@ async function deploy(contractPathName) {
   console.log("Deploying...");
   const contract = await contractFactory.deploy(); // response
 
-  //console.log(contract);
+  // console.log(contract);
   const deploymentReceipt = await contract.deployTransaction.wait(1);
-  console.log(deploymentReceipt);
+  console.log(`txHash: ${deploymentReceipt.transactionHash}`);
   console.log(`Contract address: ${contract.address}`);
 }
-
-// Обращение к функциям контракта
-async function callContract(contract) {
-  let curNote = await _pureFunction(contract, "getNote");
-  console.log(`First request of note: '${curNote.txResponse}'`);
-  const setNote = await _callFunction({contract: contract, funcName: "setNote", args: ["My first note"]});
-  console.log(`Transaction tx: ${setNote.txReceipt}`);
-  curNote = await _pureFunction(contract, "getNote");
-  console.log(`New note: '${curNote.txResponse}'`);
-}
-
-
 
 deploy(ContractPathName)
   .then(() => process.exit(0))
