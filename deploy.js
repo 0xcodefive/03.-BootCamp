@@ -3,15 +3,12 @@ const solc = require("solc");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+import { _callFunction, _pureFunction } from './helpers.js';
 
 const ContractPathName = "Note.sol";
 
 async function saveBytecodeAndAbi(contractPathName) {
-  const contractPath = path.resolve(
-    __dirname,
-    "contracts",
-    contractPathName
-  );
+  const contractPath = path.resolve(__dirname, "contracts", contractPathName);
   const contractSource = fs.readFileSync(contractPath, "utf8");
 
   // Извлекаем имя контракта из исходного кода контракта
@@ -19,7 +16,7 @@ async function saveBytecodeAndAbi(contractPathName) {
   const contractName = contractNameMatch ? contractNameMatch[1] : null;
 
   if (!contractName) {
-    throw new Error('Could not find contract name');
+    throw new Error("Could not find contract name");
   }
 
   const input = {
@@ -49,7 +46,7 @@ async function saveBytecodeAndAbi(contractPathName) {
   );
   fs.writeFileSync(abiPath, abi);
   console.log(`ABI saved to ${abiPath}`);
-  
+
   // Извлечение байткода контракта
   const bytecode = contractData.evm.bytecode.object;
   // Сохраняем файл байткода
@@ -70,6 +67,7 @@ async function deploy(contractPathName) {
   const contratcFunc = await saveBytecodeAndAbi(contractPathName);
   const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
   const account = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  console.log(`Wallet address: ${account.address}`);
 
   const abi = contratcFunc.ABI;
   const binary = contratcFunc.bytecode;
@@ -82,14 +80,19 @@ async function deploy(contractPathName) {
   const deploymentReceipt = await contract.deployTransaction.wait(1);
   console.log(deploymentReceipt);
   console.log(`Contract address: ${contract.address}`);
-
-  let curNote = await contract.getNote();
-  console.log(`First request of note: ${curNote}`);
-  const txResponse = await contract.setNote("My first note");
-  const txReceipt = await txResponse.wait(1);
-  curNote = await contract.getNote();
-  console.log(`New note: ${curNote}`);
 }
+
+// Обращение к функциям контракта
+async function callContract(contract) {
+  let curNote = await _pureFunction(contract, "getNote");
+  console.log(`First request of note: '${curNote.txResponse}'`);
+  const setNote = await _callFunction({contract: contract, funcName: "setNote", args: ["My first note"]});
+  console.log(`Transaction tx: ${setNote.txReceipt}`);
+  curNote = await _pureFunction(contract, "getNote");
+  console.log(`New note: '${curNote.txResponse}'`);
+}
+
+
 
 deploy(ContractPathName)
   .then(() => process.exit(0))
