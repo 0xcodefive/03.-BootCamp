@@ -20,7 +20,7 @@ async function callContract(contractName, contractAddress) {
   let curNote = await _pureFunction(contract, "getNote");
   console.log(`First request of note: '${curNote.txResponse}'`);
   const setNote = await _callFunction(contract, "setNote", 0, ["My any note"]);
-  console.log(`Transaction tx: ${setNote.txReceipt}`);
+  console.log(`Transaction tx: ${setNote.txReceipt.transactionHash}`);
   curNote = await _pureFunction(contract, "getNote");
   console.log(`New note: '${curNote.txResponse}'`);
 }

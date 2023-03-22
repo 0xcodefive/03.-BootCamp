@@ -9,7 +9,7 @@
 
 Возвращаем значения:
     txResponse - ответ выполнения функции
-    txReceipt - номер транзакции в блокчейне
+    txReceipt - результат выполнения транзакции в блокчейне
 ***************************************************/
 async function _callFunction(contract, funcName, value, args) {
   // Проверяем, существует ли функция с заданным именем
@@ -28,7 +28,7 @@ async function _callFunction(contract, funcName, value, args) {
   const txReceipt = await txResponse.wait(1);
   return {
     txResponse: txResponse,
-    txReceipt: txReceipt.transactionHash,
+    txReceipt: txReceipt,
   };
 }
 
@@ -41,7 +41,7 @@ async function _callFunction(contract, funcName, value, args) {
     args - аргументы в формате array
   
 Возвращаем значения:
-    txResponse - ответ выполнения функции
+    txResponse - результат выполнения выполнения функции
 ***************************************************/
 async function _pureFunction(contract, funcName, args) {
   // Проверяем, существует ли функция с заданным именем
